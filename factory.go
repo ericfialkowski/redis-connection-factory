@@ -68,15 +68,14 @@ func getTimeout(prior int) int {
 }
 
 func initialDelay() int {
-
-	return getEnvIntOrDefault(initialDelayEnvKey, 1000)
+	return envIntOrDefault(initialDelayEnvKey, 1000)
 }
 
 func maxDelay() int {
-	return getEnvIntOrDefault(maxDelayEnvKey, 15000)
+	return envIntOrDefault(maxDelayEnvKey, 15000)
 }
 
-func getEnvIntOrDefault(key string, defaultValue int) int {
+func envIntOrDefault(key string, defaultValue int) int {
 	envVal := os.Getenv(key)
 	if envVal == "" {
 		return defaultValue

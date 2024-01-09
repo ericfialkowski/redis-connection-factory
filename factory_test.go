@@ -92,7 +92,7 @@ func TestClientNoConnectDelay(t *testing.T) {
 	}
 }
 
-func Test_getEnvIntOrDefault(t *testing.T) {
+func Test_envIntOrDefault(t *testing.T) {
 	t.Setenv("A", "25")
 	t.Setenv("B", "dog")
 
@@ -111,8 +111,8 @@ func Test_getEnvIntOrDefault(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getEnvIntOrDefault(tt.args.key, tt.args.defaultValue); got != tt.want {
-				t.Errorf("getEnvIntOrDefault() = %v, want %v", got, tt.want)
+			if got := envIntOrDefault(tt.args.key, tt.args.defaultValue); got != tt.want {
+				t.Errorf("envIntOrDefault() = %v, want %v", got, tt.want)
 			}
 		})
 	}
