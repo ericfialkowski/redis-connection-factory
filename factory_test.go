@@ -12,7 +12,9 @@ var testContainers = []struct {
 	name  string
 	image string
 }{
-	{"redis7", "docker.io/redis:7"},
+	{"redis6.2", "docker.io/redis:6.2"},
+	{"redis7.2", "docker.io/redis:7.2"},
+	{"redis7.4", "docker.io/redis:7.4"},
 	{"valkey7.2", "docker.io/valkey/valkey:7.2"},
 	{"valkey8.0", "docker.io/valkey/valkey:8.0"},
 	{"valkey8.1", "docker.io/valkey/valkey:8.1"},
