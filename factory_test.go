@@ -8,15 +8,18 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 )
 
+var testContainers = []struct {
+	name  string
+	image string
+}{
+	{"redis7", "docker.io/redis:7"},
+	{"valkey7.2", "docker.io/valkey/valkey:7.2"},
+	{"valkey8.0", "docker.io/valkey/valkey:8.0"},
+	{"valkey8.1", "docker.io/valkey/valkey:8.1"},
+}
+
 func TestFromURL(t *testing.T) {
-	tests := []struct {
-		name  string
-		image string
-	}{
-		{"redis7", "docker.io/redis:7"},
-		{"valkey7", "docker.io/valkey/valkey:7"},
-	}
-	for _, tt := range tests {
+	for _, tt := range testContainers {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			container, err := redis.RunContainer(ctx,
@@ -57,14 +60,7 @@ func TestBadURL(t *testing.T) {
 }
 
 func TestFromAddress(t *testing.T) {
-	tests := []struct {
-		name  string
-		image string
-	}{
-		{"redis7", "docker.io/redis:7"},
-		{"valkey7", "docker.io/valkey/valkey:7"},
-	}
-	for _, tt := range tests {
+	for _, tt := range testContainers {
 		t.Run(tt.name, func(t *testing.T) {
 
 			ctx := context.Background()
