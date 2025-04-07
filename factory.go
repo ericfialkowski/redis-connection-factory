@@ -35,12 +35,11 @@ func FromAddress(ctx context.Context, maxTries int, addr string, password string
 
 func FromOptions(ctx context.Context, maxTries int, opts *redis.Options) (*redis.Client, error) {
 	redisClient := redis.NewClient(opts)
-	connected := false
 	tries := 0
 
 	// how many ms to start out the connection delay
 	delay := initialDelay()
-	for tries < maxTries && !connected {
+	for tries < maxTries {
 		tries++
 		_, err := redisClient.Ping(ctx).Result() // ignoring the "PONG" reply
 		if err != nil {
@@ -48,11 +47,10 @@ func FromOptions(ctx context.Context, maxTries int, opts *redis.Options) (*redis
 			delay = getTimeout(delay)
 			time.Sleep(time.Duration(delay) * time.Millisecond)
 		} else {
-			connected = true
 			break
 		}
 	}
-	if !connected {
+	if tries == maxTries {
 		return nil, fmt.Errorf("could not connect to Redis after %d tries", tries)
 	}
 	return redisClient, nil
