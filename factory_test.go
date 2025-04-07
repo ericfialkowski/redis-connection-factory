@@ -30,17 +30,17 @@ func TestFromURL(t *testing.T) {
 			)
 
 			if err != nil {
-				t.Fatalf("Error starting test container: %v", err)
+				t.Fatalf("Error starting test container %s: %v", tt.image, err)
 			}
 			t.Cleanup(func() {
 				if err := container.Terminate(ctx); err != nil {
-					t.Fatalf("Error terminating test container: %v", err)
+					t.Fatalf("Error terminating test container %s: %v", tt.image, err)
 				}
 			})
 
 			connStr, err := container.ConnectionString(ctx)
 			if err != nil {
-				t.Fatalf("Error getting test container connection string: %v", err)
+				t.Fatalf("Error getting test container connection string %s: %v", tt.image, err)
 			}
 
 			client, err := FromURL(ctx, 2, connStr)
@@ -72,17 +72,17 @@ func TestFromAddress(t *testing.T) {
 			)
 
 			if err != nil {
-				t.Fatalf("Error starting test container: %v", err)
+				t.Fatalf("Error starting test container %s: %v", tt.image, err)
 			}
 			t.Cleanup(func() {
 				if err := container.Terminate(ctx); err != nil {
-					t.Fatalf("Error terminating test container: %v", err)
+					t.Fatalf("Error terminating test container %s: %v", tt.image, err)
 				}
 			})
 
 			addr, err := container.Endpoint(ctx, "")
 			if err != nil {
-				t.Fatalf("Error getting test container connection string: %v", err)
+				t.Fatalf("Error getting test container connection string %s: %v", tt.image, err)
 			}
 
 			client, err := FromAddress(ctx, 2, addr, "")

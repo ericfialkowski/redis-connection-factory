@@ -43,7 +43,7 @@ func FromOptions(ctx context.Context, maxTries int, opts *redis.Options) (*redis
 		tries++
 		_, err := redisClient.Ping(ctx).Result() // ignoring the "PONG" reply
 		if err != nil {
-			log.Printf("Unable to connect to Redis: %v", err)
+			log.Printf("Unable to connect to Redis, attempt %d: %v", tries, err)
 			delay = getTimeout(delay)
 			time.Sleep(time.Duration(delay) * time.Millisecond)
 		} else {
