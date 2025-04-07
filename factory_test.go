@@ -36,6 +36,35 @@ func TestFromURL(t *testing.T) {
 	_ = client.Close()
 }
 
+func TestValkeyFromURL(t *testing.T) {
+	ctx := context.Background()
+	container, err := redis.RunContainer(ctx,
+		testcontainers.WithImage("docker.io/valkey/valkey:8"),
+		redis.WithLogLevel(redis.LogLevelVerbose),
+	)
+
+	if err != nil {
+		t.Fatalf("Error starting test container: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatalf("Error terminating test container: %v", err)
+		}
+	})
+
+	connStr, err := container.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("Error getting test container connection string: %v", err)
+	}
+
+	client, err := FromURL(ctx, 2, connStr)
+	if err != nil {
+		t.Fatalf("Error getting client: %v", err)
+	}
+
+	_ = client.Close()
+}
+
 func TestBadURL(t *testing.T) {
 	ctx := context.Background()
 	_, err := FromURL(ctx, 3, "")
@@ -49,6 +78,35 @@ func TestFromAddress(t *testing.T) {
 	ctx := context.Background()
 	container, err := redis.RunContainer(ctx,
 		testcontainers.WithImage("docker.io/redis:7"),
+		redis.WithLogLevel(redis.LogLevelVerbose),
+	)
+
+	if err != nil {
+		t.Fatalf("Error starting test container: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatalf("Error terminating test container: %v", err)
+		}
+	})
+
+	addr, err := container.Endpoint(ctx, "")
+	if err != nil {
+		t.Fatalf("Error getting test container connection string: %v", err)
+	}
+
+	client, err := FromAddress(ctx, 2, addr, "")
+	if err != nil {
+		t.Fatalf("Error getting client: %v", err)
+	}
+
+	_ = client.Close()
+}
+
+func TestValkeyFromAddress(t *testing.T) {
+	ctx := context.Background()
+	container, err := redis.RunContainer(ctx,
+		testcontainers.WithImage("docker.io/valkey/valkey:7"),
 		redis.WithLogLevel(redis.LogLevelVerbose),
 	)
 
