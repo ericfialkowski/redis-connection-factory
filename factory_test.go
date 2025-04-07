@@ -2,67 +2,50 @@ package redisfactory
 
 import (
 	"context"
+	"testing"
+
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/redis"
-	"testing"
 )
 
 func TestFromURL(t *testing.T) {
-	ctx := context.Background()
-	container, err := redis.RunContainer(ctx,
-		testcontainers.WithImage("docker.io/redis:7"),
-		redis.WithLogLevel(redis.LogLevelVerbose),
-	)
-
-	if err != nil {
-		t.Fatalf("Error starting test container: %v", err)
+	tests := []struct {
+		name  string
+		image string
+	}{
+		{"redis7", "docker.io/redis:7"},
+		{"valkey7", "docker.io/valkey/valkey:7"},
 	}
-	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Error terminating test container: %v", err)
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			container, err := redis.RunContainer(ctx,
+				testcontainers.WithImage(tt.image),
+				redis.WithLogLevel(redis.LogLevelVerbose),
+			)
 
-	connStr, err := container.ConnectionString(ctx)
-	if err != nil {
-		t.Fatalf("Error getting test container connection string: %v", err)
+			if err != nil {
+				t.Fatalf("Error starting test container: %v", err)
+			}
+			t.Cleanup(func() {
+				if err := container.Terminate(ctx); err != nil {
+					t.Fatalf("Error terminating test container: %v", err)
+				}
+			})
+
+			connStr, err := container.ConnectionString(ctx)
+			if err != nil {
+				t.Fatalf("Error getting test container connection string: %v", err)
+			}
+
+			client, err := FromURL(ctx, 2, connStr)
+			if err != nil {
+				t.Fatalf("Error getting client: %v", err)
+			}
+
+			_ = client.Close()
+		})
 	}
-
-	client, err := FromURL(ctx, 2, connStr)
-	if err != nil {
-		t.Fatalf("Error getting client: %v", err)
-	}
-
-	_ = client.Close()
-}
-
-func TestValkeyFromURL(t *testing.T) {
-	ctx := context.Background()
-	container, err := redis.RunContainer(ctx,
-		testcontainers.WithImage("docker.io/valkey/valkey:8"),
-		redis.WithLogLevel(redis.LogLevelVerbose),
-	)
-
-	if err != nil {
-		t.Fatalf("Error starting test container: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Error terminating test container: %v", err)
-		}
-	})
-
-	connStr, err := container.ConnectionString(ctx)
-	if err != nil {
-		t.Fatalf("Error getting test container connection string: %v", err)
-	}
-
-	client, err := FromURL(ctx, 2, connStr)
-	if err != nil {
-		t.Fatalf("Error getting client: %v", err)
-	}
-
-	_ = client.Close()
 }
 
 func TestBadURL(t *testing.T) {
@@ -71,65 +54,47 @@ func TestBadURL(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Should have timedout")
 	}
-
 }
 
 func TestFromAddress(t *testing.T) {
-	ctx := context.Background()
-	container, err := redis.RunContainer(ctx,
-		testcontainers.WithImage("docker.io/redis:7"),
-		redis.WithLogLevel(redis.LogLevelVerbose),
-	)
-
-	if err != nil {
-		t.Fatalf("Error starting test container: %v", err)
+	tests := []struct {
+		name  string
+		image string
+	}{
+		{"redis7", "docker.io/redis:7"},
+		{"valkey7", "docker.io/valkey/valkey:7"},
 	}
-	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Error terminating test container: %v", err)
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	addr, err := container.Endpoint(ctx, "")
-	if err != nil {
-		t.Fatalf("Error getting test container connection string: %v", err)
+			ctx := context.Background()
+			container, err := redis.RunContainer(ctx,
+				testcontainers.WithImage(tt.image),
+				redis.WithLogLevel(redis.LogLevelVerbose),
+			)
+
+			if err != nil {
+				t.Fatalf("Error starting test container: %v", err)
+			}
+			t.Cleanup(func() {
+				if err := container.Terminate(ctx); err != nil {
+					t.Fatalf("Error terminating test container: %v", err)
+				}
+			})
+
+			addr, err := container.Endpoint(ctx, "")
+			if err != nil {
+				t.Fatalf("Error getting test container connection string: %v", err)
+			}
+
+			client, err := FromAddress(ctx, 2, addr, "")
+			if err != nil {
+				t.Fatalf("Error getting client: %v", err)
+			}
+
+			_ = client.Close()
+		})
 	}
-
-	client, err := FromAddress(ctx, 2, addr, "")
-	if err != nil {
-		t.Fatalf("Error getting client: %v", err)
-	}
-
-	_ = client.Close()
-}
-
-func TestValkeyFromAddress(t *testing.T) {
-	ctx := context.Background()
-	container, err := redis.RunContainer(ctx,
-		testcontainers.WithImage("docker.io/valkey/valkey:7"),
-		redis.WithLogLevel(redis.LogLevelVerbose),
-	)
-
-	if err != nil {
-		t.Fatalf("Error starting test container: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Error terminating test container: %v", err)
-		}
-	})
-
-	addr, err := container.Endpoint(ctx, "")
-	if err != nil {
-		t.Fatalf("Error getting test container connection string: %v", err)
-	}
-
-	client, err := FromAddress(ctx, 2, addr, "")
-	if err != nil {
-		t.Fatalf("Error getting client: %v", err)
-	}
-
-	_ = client.Close()
 }
 
 func TestClientNoConnect(t *testing.T) {
