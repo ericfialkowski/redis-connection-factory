@@ -13,3 +13,4 @@
 *.cov
 
 /.env
+/.claude/

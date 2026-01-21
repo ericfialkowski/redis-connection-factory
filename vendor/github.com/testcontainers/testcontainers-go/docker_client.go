@@ -8,10 +8,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 
-	"github.com/testcontainers/testcontainers-go/internal/testcontainersdocker"
-	"github.com/testcontainers/testcontainers-go/internal/testcontainerssession"
+	"github.com/testcontainers/testcontainers-go/internal"
+	"github.com/testcontainers/testcontainers-go/internal/core"
+	"github.com/testcontainers/testcontainers-go/log"
 )
 
 // DockerClient is a wrapper around the docker client that is used by testcontainers-go.
@@ -22,7 +24,7 @@ type DockerClient struct {
 
 var (
 	// dockerInfo stores the docker info to be reused in the Info method
-	dockerInfo     types.Info
+	dockerInfo     system.Info
 	dockerInfoSet  bool
 	dockerInfoLock sync.Mutex
 )
@@ -31,14 +33,14 @@ var (
 var _ client.SystemAPIClient = &DockerClient{}
 
 // Events returns a channel to listen to events that happen to the docker daemon.
-func (c *DockerClient) Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error) {
+func (c *DockerClient) Events(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
 	return c.Client.Events(ctx, options)
 }
 
 // Info returns information about the docker server. The result of Info is cached
 // and reused every time Info is called.
 // It will also print out the docker server info, and the resolved Docker paths, to the default logger.
-func (c *DockerClient) Info(ctx context.Context) (types.Info, error) {
+func (c *DockerClient) Info(ctx context.Context) (system.Info, error) {
 	dockerInfoLock.Lock()
 	defer dockerInfoLock.Unlock()
 	if dockerInfoSet {
@@ -56,20 +58,32 @@ func (c *DockerClient) Info(ctx context.Context) (types.Info, error) {
   Server Version: %v
   API Version: %v
   Operating System: %v
-  Total Memory: %v MB
+  Total Memory: %v MB%s
+  Testcontainers for Go Version: v%s
   Resolved Docker Host: %s
   Resolved Docker Socket Path: %s
   Test SessionID: %s
   Test ProcessID: %s
 `
+	infoLabels := ""
+	if len(dockerInfo.Labels) > 0 {
+		infoLabels = `
+  Labels:`
+		for _, lb := range dockerInfo.Labels {
+			infoLabels += "\n    " + lb
+		}
+	}
 
-	Logger.Printf(infoMessage, packagePath,
-		dockerInfo.ServerVersion, c.Client.ClientVersion(),
+	log.Printf(infoMessage, packagePath,
+		dockerInfo.ServerVersion,
+		c.ClientVersion(),
 		dockerInfo.OperatingSystem, dockerInfo.MemTotal/1024/1024,
-		testcontainersdocker.ExtractDockerHost(ctx),
-		testcontainersdocker.ExtractDockerSocket(ctx),
-		testcontainerssession.SessionID(),
-		testcontainerssession.ProcessID(),
+		infoLabels,
+		internal.Version,
+		core.MustExtractDockerHost(ctx),
+		core.MustExtractDockerSocket(ctx),
+		core.SessionID(),
+		core.ProcessID(),
 	)
 
 	return dockerInfo, nil
@@ -101,7 +115,7 @@ func NewDockerClient() (*client.Client, error) {
 }
 
 func NewDockerClientWithOpts(ctx context.Context, opt ...client.Opt) (*DockerClient, error) {
-	dockerClient, err := testcontainersdocker.NewClient(ctx, opt...)
+	dockerClient, err := core.NewClient(ctx, opt...)
 	if err != nil {
 		return nil, err
 	}
